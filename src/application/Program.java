@@ -1,31 +1,42 @@
 package application;
 
-import java.io.File;
+
+import java.util.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 import java.util.Scanner;
+
+import service.ContractService;
+import service.PaypalService;
+import entities.Contract;
+import entities.Installment;
 
 public class Program {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ParseException {
+		Locale.setDefault(Locale.US);
 		Scanner sc = new Scanner(System.in);
-		System.out.println("Enter a folder path: ");
-		String strPath = sc.nextLine();
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 		
-		File path = new File(strPath);
+		System.out.println("Enter contract data");
+		System.out.print("Number: ");
+		int number = sc.nextInt();
+		System.out.print("Date (dd/MM/yyyy): ");
+		Date date = sdf.parse(sc.next());
+		System.out.print("Contract Value: ");
+		double totalValue = sc.nextDouble();
+		Contract contract = new Contract(number, date, totalValue);
+		System.out.print("Enter the number of installments: ");
+		int months = sc.nextInt();
 		
-		File[] folders = path.listFiles(File::isDirectory);
-		System.out.println("FOLDERS:");
-		for (File folder : folders) {
-			System.out.println(folder);
+		ContractService contractService = new ContractService(new PaypalService());
+		contractService.processContract(contract, months);
+		
+		System.out.println("Installments");
+		for (Installment x : contract.getInstallments()) {
+			System.out.println(x);
 		}
-		
-		File[] files = path.listFiles(File::isFile);
-		System.out.println("FILES:");
-		for (File file : files) {
-			System.out.println(file);
-		}
-		
-		boolean success = new File(strPath + "\\subdir").mkdir();
-		System.out.println("Directory created successfully: " + success);
 		
 		sc.close();
 	}
