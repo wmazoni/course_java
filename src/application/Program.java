@@ -1,43 +1,59 @@
 package application;
 
-
-import java.util.Date;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
-import service.ContractService;
-import service.PaypalService;
-import entities.Contract;
-import entities.Installment;
+import entities.Employee;
 
 public class Program {
 
-	public static void main(String[] args) throws ParseException {
+	public static void main(String[] args) {
+		
 		Locale.setDefault(Locale.US);
 		Scanner sc = new Scanner(System.in);
-		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 		
-		System.out.println("Enter contract data");
-		System.out.print("Number: ");
-		int number = sc.nextInt();
-		System.out.print("Date (dd/MM/yyyy): ");
-		Date date = sdf.parse(sc.next());
-		System.out.print("Contract Value: ");
-		double totalValue = sc.nextDouble();
-		Contract contract = new Contract(number, date, totalValue);
-		System.out.print("Enter the number of installments: ");
-		int months = sc.nextInt();
+		System.out.print("Enter the full file path: ");
+		String path = sc.nextLine();
 		
-		ContractService contractService = new ContractService(new PaypalService());
-		contractService.processContract(contract, months);
-		
-		System.out.println("Installments");
-		for (Installment x : contract.getInstallments()) {
-			System.out.println(x);
+		try (BufferedReader br = new BufferedReader(new FileReader(path))){
+			
+			List<Employee> list = new ArrayList<>();
+			
+			String line = br.readLine();
+			while (line != null) {
+				String[] fields = line.split(",");
+				list.add(new Employee(fields[0], fields[1], Double.parseDouble(fields[2])));
+				line = br.readLine();
+			}
+			
+			System.out.print("Enter salary: ");
+			double salary = sc.nextDouble();
+			
+			List<String> emails = list.stream()
+					.filter(x -> x.getSalary() > salary)
+					.map(x -> x.getEmail())
+					.sorted()
+					.collect(Collectors.toList());
+			
+			System.out.println("Email of people whose salary is more than " + String.format("%.2f", salary) + ":");
+			emails.forEach(System.out::println);
+			
+			double sum = list.stream()
+					.filter(x -> x.getName().charAt(0) == 'M')
+					.map(x -> x.getSalary())
+					.reduce(0.0, (x, y) -> x + y);
+			
+			System.out.println("Sum of salary from people whose name starts with 'M': " + String.format("%.2f", sum));
+		} catch (IOException e) {
+			System.out.println("Error: " + e.getMessage());
 		}
-		
-		sc.close();
+
 	}
+
 }
